@@ -9,12 +9,16 @@ ninja.wallets.paperwallet = {
 		paperArea.style.display = "block";
 		var perPageLimitElement = document.getElementById("paperlimitperpage");
 		var limitElement = document.getElementById("paperlimit");
+		var amountElement = document.getElementById("paperamount");
 		var pageBreakAt = (ninja.wallets.paperwallet.useArtisticWallet) ? ninja.wallets.paperwallet.pageBreakAtArtisticDefault : ninja.wallets.paperwallet.pageBreakAtDefault;
 		if (perPageLimitElement && perPageLimitElement.value < 1) {
 			perPageLimitElement.value = pageBreakAt;
 		}
 		if (limitElement && limitElement.value < 1) {
 			limitElement.value = pageBreakAt;
+		}
+		if (amountElement && amountElement.value <= 0) {
+			amountElement.value = ninja.wallets.paperwallet.paperamountDefault;
 		}
 		if (document.getElementById("paperkeyarea").innerHTML == "") {
 			document.getElementById("paperpassphrase").disabled = true;
@@ -29,6 +33,9 @@ ninja.wallets.paperwallet = {
 		document.getElementById("main").setAttribute("class", ""); // remove 'paper' class from main div
 	},
 
+	walletdump: [],
+	rpcsendmany: [],
+	paperamountDefault: 0.01,
 	remaining: null, // use to keep track of how many addresses are left to process when building the paper wallet
 	count: 0,
 	pageBreakAtDefault: 7,
@@ -43,6 +50,8 @@ ninja.wallets.paperwallet = {
 		ninja.wallets.paperwallet.count = 0;
 		ninja.wallets.paperwallet.useArtisticWallet = useArtisticWallet;
 		ninja.wallets.paperwallet.pageBreakAt = pageBreakAt;
+		ninja.wallets.paperwallet.walletdump = [];
+		ninja.wallets.paperwallet.rpcsendmany = [];
 		document.getElementById("paperkeyarea").innerHTML = "";
 		if (ninja.wallets.paperwallet.encrypt) {
 			if (passphrase == "") {
@@ -55,9 +64,18 @@ ninja.wallets.paperwallet = {
 				document.getElementById("busyblock").className = "";
 				setTimeout(ninja.wallets.paperwallet.batch, 0);
 			});
+			document.getElementById("paperareabody").style.display = "none";
 		}
 		else {
+			var d = new Date();
+			ninja.wallets.paperwallet.walletdump.push("# Wallet dump created by paper.dash.org");
+			ninja.wallets.paperwallet.walletdump.push("# * Created on " + d.toISOString() + "\n");
+			if (numWallets > 500) {
+				ninja.wallets.paperwallet.rpcsendmany.push("# WARNING! Too many addresses, rpc could fail!\n\n");
+			}
+			ninja.wallets.paperwallet.rpcsendmany.push("sendmany \"\" \"{");
 			setTimeout(ninja.wallets.paperwallet.batch, 0);
+			document.getElementById("paperareabody").style.display = "block";
 		}
 	},
 
@@ -92,7 +110,17 @@ ninja.wallets.paperwallet = {
 			document.getElementById("paperkeyarea").appendChild(div);
 			ninja.wallets.paperwallet.generateNewWallet(i);
 			ninja.wallets.paperwallet.remaining--;
+			if (!ninja.wallets.paperwallet.encrypt && ninja.wallets.paperwallet.remaining > 0) {
+				ninja.wallets.paperwallet.rpcsendmany.push(",");
+			}
 			setTimeout(ninja.wallets.paperwallet.batch, 0);
+		}
+		if (!ninja.wallets.paperwallet.encrypt && ninja.wallets.paperwallet.remaining == 0) {
+			ninja.wallets.paperwallet.walletdump.push("\n# End of dump");
+			ninja.wallets.paperwallet.rpcsendmany.push("}\"");
+			document.getElementById("paperdumparea").value = ninja.wallets.paperwallet.walletdump.join("\n");
+			document.getElementById("paperrpcarea").value = ninja.wallets.paperwallet.rpcsendmany.join("");
+			ninja.wallets.paperwallet.remaining--;
 		}
 	},
 
@@ -100,7 +128,8 @@ ninja.wallets.paperwallet = {
 	// idPostFix: 1, 2, 3, etc.
 	generateNewWallet: function (idPostFix) {
 		if (ninja.wallets.paperwallet.encrypt) {
-			ninja.privateKey.BIP38GenerateECAddressAsync(ninja.wallets.paperwallet.intermediatePoint, false, function (address, encryptedKey) {
+			var compressed = true;
+			ninja.privateKey.BIP38GenerateECAddressAsync(ninja.wallets.paperwallet.intermediatePoint, compressed, function (address, encryptedKey) {
 				Bitcoin.KeyPool.push(new Bitcoin.Bip38Key(address, encryptedKey));
 				if (ninja.wallets.paperwallet.useArtisticWallet) {
 					ninja.wallets.paperwallet.showArtisticWallet(idPostFix, address, encryptedKey);
@@ -112,6 +141,7 @@ ninja.wallets.paperwallet = {
 		}
 		else {
 			var key = new Bitcoin.ECKey(false);
+			key.setCompressed(true);
 			var bitcoinAddress = key.getBitcoinAddress();
 			var privateKeyWif = key.getBitcoinWalletImportFormat();
 			if (ninja.wallets.paperwallet.useArtisticWallet) {
@@ -120,6 +150,9 @@ ninja.wallets.paperwallet = {
 			else {
 				ninja.wallets.paperwallet.showWallet(idPostFix, bitcoinAddress, privateKeyWif);
 			}
+			var d = new Date();
+			ninja.wallets.paperwallet.walletdump.push(privateKeyWif + " " + d.toISOString() + " label=paper" + idPostFix + " # addr=" + bitcoinAddress);
+			ninja.wallets.paperwallet.rpcsendmany.push("\\\"" + bitcoinAddress + "\\\":" + document.getElementById("paperamount").value);
 		}
 	},
 
@@ -189,8 +222,9 @@ ninja.wallets.paperwallet = {
 		document.getElementById("btcaddress" + idPostFix).innerHTML = bitcoinAddress;
 
 		if (ninja.wallets.paperwallet.encrypt) {
-			var half = privateKey.length / 2;
-			document.getElementById("btcencryptedkey" + idPostFix).innerHTML = privateKey.slice(0, half) + '<br />' + privateKey.slice(half);
+			// var half = privateKey.length / 2;
+			// document.getElementById("btcencryptedkey" + idPostFix).innerHTML = privateKey.slice(0, half) + '<br />' + privateKey.slice(half);
+			document.getElementById("btcencryptedkey" + idPostFix).innerHTML = privateKey;
 		}
 		else {
 			document.getElementById("btcprivwif" + idPostFix).innerHTML = privateKey;
@@ -219,6 +253,7 @@ ninja.wallets.paperwallet = {
 		// enable/disable passphrase textbox
 		document.getElementById("paperpassphrase").disabled = !element.checked;
 		ninja.wallets.paperwallet.encrypt = element.checked;
+		document.getElementById("paperareabody").style.display = element.checked ? "none" : "block";
 		ninja.wallets.paperwallet.resetLimits();
 	},
 
@@ -232,6 +267,8 @@ ninja.wallets.paperwallet = {
 		if (!hideArt.checked) {
 			limit = ninja.wallets.paperwallet.pageBreakAtArtisticDefault;
 			limitperpage = ninja.wallets.paperwallet.pageBreakAtArtisticDefault;
+			// reduce font size
+			document.getElementById("paperkeyarea").style.fontSize = "90%";
 		}
 		else if (hideArt.checked && paperEncrypt.checked) {
 			limit = ninja.wallets.paperwallet.pageBreakAtDefault;
@@ -245,5 +282,6 @@ ninja.wallets.paperwallet = {
 		}
 		document.getElementById("paperlimitperpage").value = limitperpage;
 		document.getElementById("paperlimit").value = limit;
+		document.getElementById("paperamount").value = ninja.wallets.paperwallet.paperamountDefault;
 	}
 };

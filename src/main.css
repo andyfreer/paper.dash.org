@@ -60,7 +60,7 @@ input[type=checkbox] { position: relative; z-index: 20; }
 		                                padding: 5px 5px 2px 5px; }
 #paperarea .artwallet .btcaddress  
 {
-	position: absolute; top: 240px; left: 139px; z-index: 100; font-size: 10px; background-color: transparent;
+	position: absolute; top: 240px; left: 142px; z-index: 100; font-size: 10px; background-color: transparent;
 	font-weight:bold; color: #000000; margin: 0;
 		-webkit-transform-origin:top left; -webkit-transform:rotate(-90deg);
 		-moz-transform-origin:top left;    -moz-transform:rotate(-90deg);
@@ -70,7 +70,7 @@ input[type=checkbox] { position: relative; z-index: 20; }
 } 
 #paperarea .artwallet .btcprivwif  
 {
-	position: absolute; top: 236px; left: 346px; z-index: 100; font-size: 7px; background-color: transparent;
+	position: absolute; top: 248px; left: 344px; z-index: 100; font-size: 7px; background-color: transparent;
 	font-weight:bold; color: #000000; margin: 0;  
 		-webkit-transform-origin:top left; -webkit-transform:rotate(-90deg);
 		-moz-transform-origin:top left;    -moz-transform:rotate(-90deg);
@@ -80,7 +80,7 @@ input[type=checkbox] { position: relative; z-index: 20; }
 }
 #paperarea .artwallet .btcencryptedkey
 {
-	position: absolute; top: 174px; left: 332px; z-index: 100; font-size: 8px; background-color: transparent;
+	position: absolute; top: 248px; left: 344px; z-index: 100; font-size: 6px; background-color: transparent;
 	font-weight:bold; color: #000000; margin: 0;  
 		-webkit-transform-origin:top left; -webkit-transform:rotate(-90deg);
 		-moz-transform-origin:top left;    -moz-transform:rotate(-90deg);
@@ -88,10 +88,12 @@ input[type=checkbox] { position: relative; z-index: 20; }
 		-o-transform-origin:top left;      -o-transform:rotate(-90deg);
 		transform-origin:top left;         transform:rotate(-90deg);
 }
+#paperdumparea, #paperrpcarea { font-size: 80%; width: 98%; margin: 4px 0 0 0; }
 #bulkarea .body { padding: 5px 0 0 0; }
 #bulkarea .format { font-style: italic; font-size: 90%; }
 #bulktextarea { font-size: 90%; width: 98%; margin: 4px 0 0 0; }
 #brainarea .keyarea { visibility: hidden; min-height: 110px; }
+#brainview { margin-left: 5px; }
 #detailkeyarea { padding: 10px; }
 #detailarea { margin: 0; text-align: left; }
 #detailarea .notes { text-align: left; font-size: 80%; padding: 0 0 20px 0; }
